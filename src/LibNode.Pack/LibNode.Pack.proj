@@ -196,7 +196,8 @@
       <_AnyConfigGypi>%(_ConfigGypi.FullPath)</_AnyConfigGypi>
     </PropertyGroup>
     <RemoveDir Directories="$(_MetaStaging)" />
-    <Exec Command="$(PythonExe) tools/install.py install --headers-only --root-dir . --config-gypi-path &quot;$(_AnyConfigGypi)&quot; --dest-dir &quot;$(_IncludeDir).&quot; --prefix /" WorkingDirectory="$(NodeSourceDir)" />
+    <!-- install.py writes <dest-dir>/<prefix>/include/node/..., so point it at the staging root. -->
+    <Exec Command="$(PythonExe) tools/install.py install --headers-only --root-dir . --config-gypi-path &quot;$(_AnyConfigGypi)&quot; --dest-dir &quot;$(_MetaStaging).&quot; --prefix /" WorkingDirectory="$(NodeSourceDir)" />
 
     <ItemGroup>
       <_MetaPropsLine Include="&lt;Project&gt;" />

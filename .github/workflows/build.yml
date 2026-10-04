@@ -127,6 +127,8 @@ jobs:
   pack:
     name: pack
     needs: node
+    # Pack whatever RIDs built (LibNode.Pack handles any subset) so one failing RID does not block the rest.
+    if: ${{ always() && contains(needs.node.result, 'success') || always() && contains(needs.node.result, 'failure') }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -168,7 +170,7 @@ jobs:
   publish:
     name: publish
     needs: pack
-    if: github.event_name != 'pull_request'
+    if: ${{ always() && needs.pack.result == 'success' && github.event_name != 'pull_request' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@v4
