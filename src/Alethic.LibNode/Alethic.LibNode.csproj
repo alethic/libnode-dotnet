@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.Build.NoTargets">
     <PropertyGroup>
-        <Description>Node.js shared library (libnode) for every supported runtime, with the C++ embedding headers.</Description>
+        <Description>Node.js shared library (libnode) and its node-dotnet embedding shim, for every supported runtime.</Description>
     </PropertyGroup>
 
     <ItemGroup>
@@ -14,7 +14,5 @@
 
     <ItemGroup>
         <None Include="..\..\README.md" Pack="true" PackagePath="." />
-        <None Include="buildTransitive\**\*" Pack="true" PackagePath="buildTransitive\%(RecursiveDir)%(Filename)%(Extension)" />
-        <None Include="$(LibNodeDir)include\**\*" Pack="true" PackagePath="build\native\include\%(RecursiveDir)%(Filename)%(Extension)" />
     </ItemGroup>
 </Project>

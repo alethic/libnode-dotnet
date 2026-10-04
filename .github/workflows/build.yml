@@ -163,8 +163,8 @@ jobs:
           compression-level: 0
 
   # ---------------------------------------------------------------------------------------------
-  # Download every RID's binaries into out/libnode/<rid>/, install the headers from the submodule
-  # into out/libnode/include/, and dotnet build: each project packs its files.
+  # Download every RID's binaries into out/libnode/<rid>/ and dotnet build: each project packs its
+  # files.
   # ---------------------------------------------------------------------------------------------
   pack:
     name: pack
@@ -188,11 +188,7 @@ jobs:
         with:
           path: out/libnode/
 
-      - name: Headers
-        working-directory: ext/node
-        run: python tools/install.py install --headers-only --root-dir . --config-gypi-path ../../out/libnode/linux-x64/config.gypi --dest-dir ../../out/libnode --prefix /
-
-      - run: ls -laR out/libnode/ | grep -v '\.h$'
+      - run: ls -laR out/libnode/
 
       - name: Build
         run: dotnet build -c Release -p:Version=$(python ext/node/tools/getnodeversion.py).${{ github.run_number }}

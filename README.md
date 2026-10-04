@@ -27,9 +27,8 @@ built against one specific libnode build, with the same compiler, and ships besi
    (or the cache key's suffix is bumped). The job then installs the headers with Node's
    `tools/install.py`, builds `node-dotnet` with CMake against them, and uploads the binaries as
    an artifact named after the RID.
-2. **pack**: downloads every artifact into `out/libnode/<rid>/`, installs the headers into
-   `out/libnode/include/`, and runs `dotnet build`. Each project under `src/` is a NoTargets
-   project whose `<None Pack="true">` items pick up its files.
+2. **pack**: downloads every artifact into `out/libnode/<rid>/` and runs `dotnet build`. Each
+   project under `src/` is a NoTargets project whose `<None Pack="true">` items pick up its files.
 3. **publish**: pushes the packages to the alethic GitHub Packages NuGet registry (`main` and tags).
 
 ## Packages
@@ -43,8 +42,6 @@ Alethic.LibNode.runtime.<rid>                   one per RID
   buildTransitive/Alethic.LibNode.runtime.<rid>.targets  (Windows) .NET Framework: copies the
                                                   native libraries to the output as runtimes\<rid>\native\
 Alethic.LibNode                                 depends on every RID package
-  build/native/include/node/                      C++ embedding headers: node.h, v8, uv, cppgc, node-api
-  buildTransitive/Alethic.LibNode.props           LibNodeIncludeDir
 ```
 
 Version is `<node version>.<build number>`, e.g. `26.10.0.17`.
