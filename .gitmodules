@@ -1,0 +1,4 @@
+[submodule "ext/node"]
+	path = ext/node
+	url = https://github.com/nodejs/node.git
+	shallow = true
