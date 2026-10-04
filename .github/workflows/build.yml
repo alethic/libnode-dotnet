@@ -1,0 +1,182 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  DOTNET_NOLOGO: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  NODE_CONFIG: Release
+
+jobs:
+
+  # ---------------------------------------------------------------------------------------------
+  # Stage 1: build Node.js as a shared library, one job per RID, using Node's own build commands.
+  # Nothing .NET here. Node cannot be cross-compiled across operating systems (its build runs
+  # freshly built host tools and needs the platform SDK), so each OS builds natively; win-arm64 is
+  # cross-compiled from x64 via --dest-cpu. Each job uploads its raw build outputs as an artifact.
+  # ---------------------------------------------------------------------------------------------
+  node:
+    name: node ${{ matrix.rid }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { rid: win-x64,     os: windows-latest,  cpu: x64 }
+          - { rid: win-arm64,   os: windows-latest,  cpu: arm64 }
+          - { rid: linux-x64,   os: ubuntu-24.04,    cpu: x64 }
+          - { rid: linux-arm64, os: ubuntu-24.04-arm, cpu: arm64 }
+          - { rid: osx-arm64,   os: macos-15,        cpu: arm64 }
+          - { rid: osx-x64,     os: macos-15-intel,  cpu: x64 }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      # ---- toolchain: a standalone LLVM, so consumers of the C++ embedding API can match the ABI
+      #      with the same compiler. Windows runners already have LLVM, NASM, Rust and the VS ClangCL
+      #      toolset props (which are pointed at the standalone LLVM via LLVMInstallDir).
+
+      - name: Toolchain (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 20
+          sudo apt-get install -y ninja-build clang-20 lld-20
+          echo "CC=/usr/lib/llvm-20/bin/clang" >> "$GITHUB_ENV"
+          echo "CXX=/usr/lib/llvm-20/bin/clang++" >> "$GITHUB_ENV"
+
+      - name: Toolchain (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install llvm@20 ninja
+          echo "CC=$(brew --prefix llvm@20)/bin/clang" >> "$GITHUB_ENV"
+          echo "CXX=$(brew --prefix llvm@20)/bin/clang++" >> "$GITHUB_ENV"
+
+      - name: Toolchain (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.cpu == 'arm64' && 'amd64_arm64' || 'amd64' }}
+
+      - name: Rust toolchain
+        run: rustup show
+
+      # ---- build
+
+      - name: Configure and build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          LLVM_DIR: C:\Program Files\LLVM
+        run: |
+          $clangVersion = (& "$env:LLVM_DIR\bin\clang.exe" --version | Select-Object -First 1) -replace '.*?(\d+\.\d+\.\d+).*', '$1'
+          # gyp cannot find VS 2017+ through the registry; point it at the developer prompt's VS (as vcbuild.bat does).
+          $env:GYP_MSVS_VERSION = if ($env:VisualStudioVersion -like '18.*') { '2026' } else { '2022' }
+          $env:GYP_MSVS_OVERRIDE_PATH = $env:VSINSTALLDIR
+          cd ext/node
+          python configure --shared --dest-cpu=${{ matrix.cpu }} --clang-cl=$clangVersion
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          $platform = if ('${{ matrix.cpu }}' -eq 'arm64') { 'ARM64' } else { 'x64' }
+          msbuild node.sln /m /nologo /clp:NoItemAndPropertyList`;Verbosity=minimal /p:Configuration=$env:NODE_CONFIG /p:Platform=$platform /p:LLVMInstallDir="$env:LLVM_DIR" /p:LLVMToolsVersion=$clangVersion
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force ../../artifact | Out-Null
+          Copy-Item out/$env:NODE_CONFIG/libnode.dll, out/$env:NODE_CONFIG/libnode.lib, out/$env:NODE_CONFIG/libnode.pdb, config.gypi ../../artifact/
+          & "$env:LLVM_DIR\bin\clang.exe" --version | Select-Object -First 1 | Set-Content ../../artifact/llvm-version.txt
+
+      - name: Configure and build (Linux / macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          cd ext/node
+          ./configure --shared --ninja --dest-cpu=${{ matrix.cpu }}
+          ninja -C out/$NODE_CONFIG
+          mkdir -p ../../artifact
+          cp out/$NODE_CONFIG/lib/libnode.* config.gypi ../../artifact/
+          "$CC" --version | head -1 > ../../artifact/llvm-version.txt
+
+      - name: Build outputs
+        shell: bash
+        run: ls -la artifact/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libnode-${{ matrix.rid }}
+          path: artifact/
+          if-no-files-found: error
+          compression-level: 0
+
+  # ---------------------------------------------------------------------------------------------
+  # Stage 2: all the .NET work on one machine. Download every RID's raw outputs, lay them out as
+  # packages (Alethic.LibNode.<rid> natives + the Alethic.LibNode top-level with headers) and pack.
+  # Headers come from the submodule via Node's install.py; it is just copying files.
+  # ---------------------------------------------------------------------------------------------
+  pack:
+    name: pack
+    needs: node
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 1
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: libnode-*
+          path: out/libnode/
+
+      - name: Normalize artifact directories
+        shell: bash
+        run: |
+          # download-artifact nests each artifact under its name: out/libnode/libnode-<rid>/ -> out/libnode/<rid>/
+          cd out/libnode && for d in libnode-*; do mv "$d" "${d#libnode-}"; done && ls -laR .
+
+      - name: Pack
+        run: dotnet build src/LibNode.Pack/LibNode.Pack.proj -t:PackAll -p:BuildNumber=${{ github.run_number }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: out/pkg/*.nupkg
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------------------------
+  # Stage 3: publish to the alethic GitHub Packages NuGet registry (main and tags only).
+  # ---------------------------------------------------------------------------------------------
+  publish:
+    name: publish
+    needs: pack
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: nupkg
+          path: out/pkg/
+
+      - uses: actions/setup-dotnet@v4
+
+      - name: Push to GitHub Packages
+        run: dotnet nuget push "out/pkg/*.nupkg" --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" --api-key "${{ secrets.GITHUB_TOKEN }}" --skip-duplicate
