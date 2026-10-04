@@ -1,0 +1,6 @@
+<Project>
+    <PropertyGroup>
+        <LibNodeNativeDir_win_x64>$(MSBuildThisFileDirectory)..\runtimes\win-x64\native\</LibNodeNativeDir_win_x64>
+        <LibNodeLibDir_win_x64>$(MSBuildThisFileDirectory)..\build\native\lib\win-x64\</LibNodeLibDir_win_x64>
+    </PropertyGroup>
+</Project>

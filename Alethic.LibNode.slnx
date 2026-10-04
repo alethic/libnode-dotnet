@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Alethic.LibNode/Alethic.LibNode.csproj" />
+    <Project Path="src/Alethic.LibNode.runtime.linux-arm64/Alethic.LibNode.runtime.linux-arm64.csproj" />
+    <Project Path="src/Alethic.LibNode.runtime.linux-x64/Alethic.LibNode.runtime.linux-x64.csproj" />
+    <Project Path="src/Alethic.LibNode.runtime.osx-arm64/Alethic.LibNode.runtime.osx-arm64.csproj" />
+    <Project Path="src/Alethic.LibNode.runtime.osx-x64/Alethic.LibNode.runtime.osx-x64.csproj" />
+    <Project Path="src/Alethic.LibNode.runtime.win-arm64/Alethic.LibNode.runtime.win-arm64.csproj" />
+    <Project Path="src/Alethic.LibNode.runtime.win-x64/Alethic.LibNode.runtime.win-x64.csproj" />
+  </Folder>
+</Solution>

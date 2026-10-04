@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.Build.NoTargets">
+    <PropertyGroup>
+        <Description>Node.js shared library (libnode) for win-arm64.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="." />
+        <None Include="buildTransitive\**\*" Pack="true" PackagePath="buildTransitive\%(RecursiveDir)%(Filename)%(Extension)" />
+        <None Include="$(LibNodeDir)win-arm64\libnode.dll" Pack="true" PackagePath="runtimes\win-arm64\native\" />
+        <None Include="$(LibNodeDir)win-arm64\libnode.lib" Pack="true" PackagePath="build\native\lib\win-arm64\" />
+    </ItemGroup>
+</Project>

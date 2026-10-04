@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.Build.NoTargets">
+    <PropertyGroup>
+        <Description>Node.js shared library (libnode) for every supported runtime, with the C++ embedding headers.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Alethic.LibNode.runtime.win-x64\Alethic.LibNode.runtime.win-x64.csproj" ReferenceOutputAssembly="true" />
+        <ProjectReference Include="..\Alethic.LibNode.runtime.win-arm64\Alethic.LibNode.runtime.win-arm64.csproj" ReferenceOutputAssembly="true" />
+        <ProjectReference Include="..\Alethic.LibNode.runtime.linux-x64\Alethic.LibNode.runtime.linux-x64.csproj" ReferenceOutputAssembly="true" />
+        <ProjectReference Include="..\Alethic.LibNode.runtime.linux-arm64\Alethic.LibNode.runtime.linux-arm64.csproj" ReferenceOutputAssembly="true" />
+        <ProjectReference Include="..\Alethic.LibNode.runtime.osx-x64\Alethic.LibNode.runtime.osx-x64.csproj" ReferenceOutputAssembly="true" />
+        <ProjectReference Include="..\Alethic.LibNode.runtime.osx-arm64\Alethic.LibNode.runtime.osx-arm64.csproj" ReferenceOutputAssembly="true" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="." />
+        <None Include="buildTransitive\**\*" Pack="true" PackagePath="buildTransitive\%(RecursiveDir)%(Filename)%(Extension)" />
+        <None Include="$(LibNodeDir)include\**\*" Pack="true" PackagePath="build\native\include\%(RecursiveDir)%(Filename)%(Extension)" />
+    </ItemGroup>
+</Project>

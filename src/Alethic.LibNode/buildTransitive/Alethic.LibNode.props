@@ -1,0 +1,5 @@
+<Project>
+    <PropertyGroup>
+        <LibNodeIncludeDir>$(MSBuildThisFileDirectory)..\build\native\include\</LibNodeIncludeDir>
+    </PropertyGroup>
+</Project>

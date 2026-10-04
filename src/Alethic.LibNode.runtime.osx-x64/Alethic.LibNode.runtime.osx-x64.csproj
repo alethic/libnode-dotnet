@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.Build.NoTargets">
+    <PropertyGroup>
+        <Description>Node.js shared library (libnode) for osx-x64.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="..\..\README.md" Pack="true" PackagePath="." />
+        <None Include="buildTransitive\**\*" Pack="true" PackagePath="buildTransitive\%(RecursiveDir)%(Filename)%(Extension)" />
+        <None Include="$(LibNodeDir)osx-x64\libnode.*.dylib" Pack="true" PackagePath="runtimes\osx-x64\native\" />
+    </ItemGroup>
+</Project>

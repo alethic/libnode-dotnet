@@ -1,0 +1,5 @@
+<Project>
+    <PropertyGroup>
+        <LibNodeNativeDir_osx_x64>$(MSBuildThisFileDirectory)..\runtimes\osx-x64\native\</LibNodeNativeDir_osx_x64>
+    </PropertyGroup>
+</Project>
