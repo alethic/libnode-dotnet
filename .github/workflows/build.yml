@@ -43,12 +43,32 @@ jobs:
           submodules: true
           fetch-depth: 1
 
+      # The build is cached per RID, keyed by the ext/node submodule commit: Node is rebuilt only when the
+      # submodule moves, or when the key's suffix is bumped after changing the build steps below.
+      - name: Node Submodule Commit
+        id: node
+        shell: bash
+        run: echo "sha=$(git rev-parse HEAD:ext/node)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache libnode Build
+        uses: actions/cache@v4
+        with:
+          path: artifact
+          key: libnode--${{ matrix.rid }}--${{ steps.node.outputs.sha }}-1
+
+      - name: Check libnode Build Stamp
+        id: libnode-build-stamp
+        uses: andstor/file-existence-action@v3
+        with:
+          files: artifact/stamp
+
       - uses: actions/setup-python@v5
+        if: steps.libnode-build-stamp.outputs.files_exists != 'true'
         with:
           python-version: '3.13'
 
       - name: Toolchain (Linux)
-        if: runner.os == 'Linux'
+        if: steps.libnode-build-stamp.outputs.files_exists != 'true' && runner.os == 'Linux'
         run: |
           wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 20
           sudo apt-get install -y ninja-build clang-20 lld-20
@@ -56,19 +76,20 @@ jobs:
           echo "CXX=/usr/lib/llvm-20/bin/clang++" >> "$GITHUB_ENV"
 
       - name: Toolchain (macOS)
-        if: runner.os == 'macOS'
+        if: steps.libnode-build-stamp.outputs.files_exists != 'true' && runner.os == 'macOS'
         run: |
           brew install llvm@20 ninja
           echo "CC=$(brew --prefix llvm@20)/bin/clang" >> "$GITHUB_ENV"
           echo "CXX=$(brew --prefix llvm@20)/bin/clang++" >> "$GITHUB_ENV"
 
       - name: Toolchain (Windows)
-        if: runner.os == 'Windows'
+        if: steps.libnode-build-stamp.outputs.files_exists != 'true' && runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.cpu == 'arm64' && 'amd64_arm64' || 'amd64' }}
 
       - name: Rust toolchain
+        if: steps.libnode-build-stamp.outputs.files_exists != 'true'
         shell: bash
         run: |
           # win-arm64 cross-compiles Node's Rust crates; the runner only has the x64 target.
@@ -76,7 +97,7 @@ jobs:
           rustup show
 
       - name: Build (Windows)
-        if: runner.os == 'Windows'
+        if: steps.libnode-build-stamp.outputs.files_exists != 'true' && runner.os == 'Windows'
         shell: pwsh
         working-directory: ext/node
         env:
@@ -93,9 +114,10 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           New-Item -ItemType Directory -Force ../../artifact | Out-Null
           Copy-Item out/$env:NODE_CONFIG/libnode.dll, out/$env:NODE_CONFIG/libnode.lib, config.gypi ../../artifact/
+          New-Item -ItemType File -Force ../../artifact/stamp | Out-Null
 
       - name: Build (Linux / macOS)
-        if: runner.os != 'Windows'
+        if: steps.libnode-build-stamp.outputs.files_exists != 'true' && runner.os != 'Windows'
         shell: bash
         working-directory: ext/node
         run: |
@@ -108,6 +130,7 @@ jobs:
           # Strip the static symbol table; exported (dynamic) symbols stay. macOS: re-apply the ad-hoc signature.
           if [ "$RUNNER_OS" = "Linux" ]; then strip --strip-unneeded ../../artifact/libnode.so.*; fi
           if [ "$RUNNER_OS" = "macOS" ]; then strip -x ../../artifact/libnode.*.dylib && codesign --force --sign - ../../artifact/libnode.*.dylib; fi
+          touch ../../artifact/stamp
 
       - run: ls -la artifact/
         shell: bash
