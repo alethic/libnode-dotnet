@@ -7,5 +7,6 @@
         <None Include="..\..\README.md" Pack="true" PackagePath="." />
         <None Include="buildTransitive\**\*" Pack="true" PackagePath="buildTransitive\%(RecursiveDir)%(Filename)%(Extension)" />
         <None Include="$(LibNodeDir)osx-arm64\libnode.*.dylib" Pack="true" PackagePath="runtimes\osx-arm64\native\" />
+        <None Include="$(LibNodeDir)osx-arm64\libnode-dotnet.dylib" Pack="true" PackagePath="runtimes\osx-arm64\native\" />
     </ItemGroup>
 </Project>

@@ -62,13 +62,13 @@ jobs:
         with:
           files: artifact/stamp
 
+      # The compilers are needed on every run: node-dotnet is built even when Node comes from the cache.
       - uses: actions/setup-python@v5
-        if: steps.libnode-build-stamp.outputs.files_exists != 'true'
         with:
           python-version: '3.13'
 
       - name: Toolchain (Linux)
-        if: steps.libnode-build-stamp.outputs.files_exists != 'true' && runner.os == 'Linux'
+        if: runner.os == 'Linux'
         run: |
           wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 20
           sudo apt-get install -y ninja-build clang-20 lld-20
@@ -76,14 +76,14 @@ jobs:
           echo "CXX=/usr/lib/llvm-20/bin/clang++" >> "$GITHUB_ENV"
 
       - name: Toolchain (macOS)
-        if: steps.libnode-build-stamp.outputs.files_exists != 'true' && runner.os == 'macOS'
+        if: runner.os == 'macOS'
         run: |
           brew install llvm@20 ninja
           echo "CC=$(brew --prefix llvm@20)/bin/clang" >> "$GITHUB_ENV"
           echo "CXX=$(brew --prefix llvm@20)/bin/clang++" >> "$GITHUB_ENV"
 
       - name: Toolchain (Windows)
-        if: steps.libnode-build-stamp.outputs.files_exists != 'true' && runner.os == 'Windows'
+        if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: ${{ matrix.cpu == 'arm64' && 'amd64_arm64' || 'amd64' }}
@@ -131,6 +131,26 @@ jobs:
           if [ "$RUNNER_OS" = "Linux" ]; then strip --strip-unneeded ../../artifact/libnode.so.*; fi
           if [ "$RUNNER_OS" = "macOS" ]; then strip -x ../../artifact/libnode.*.dylib && codesign --force --sign - ../../artifact/libnode.*.dylib; fi
           touch ../../artifact/stamp
+
+      # node-dotnet, the C embedding shim, built against this RID's headers and libnode with the same compiler.
+      - name: Headers
+        shell: bash
+        working-directory: ext/node
+        env:
+          MSYS_NO_PATHCONV: 1 # keep Git Bash on Windows from rewriting --prefix /
+        run: python tools/install.py install --headers-only --root-dir . --config-gypi-path ../../artifact/config.gypi --dest-dir ../../out/libnode --prefix /
+
+      - name: Build node-dotnet
+        shell: bash
+        run: |
+          args=(-G Ninja -DCMAKE_BUILD_TYPE=Release -DLIBNODE_INCLUDE_DIR=out/libnode/include -DLIBNODE_DIR=artifact)
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            args+=("-DCMAKE_CXX_COMPILER=C:/Program Files/LLVM/bin/clang-cl.exe")
+            if [ "${{ matrix.cpu }}" = "arm64" ]; then args+=(-DCMAKE_CXX_COMPILER_TARGET=aarch64-pc-windows-msvc); fi
+          fi
+          cmake -S src/node-dotnet -B out/node-dotnet "${args[@]}"
+          cmake --build out/node-dotnet
+          find out/node-dotnet -maxdepth 1 \( -name node-dotnet.dll -o -name libnode-dotnet.so -o -name libnode-dotnet.dylib \) -exec cp {} artifact/ \;
 
       - run: ls -la artifact/
         shell: bash

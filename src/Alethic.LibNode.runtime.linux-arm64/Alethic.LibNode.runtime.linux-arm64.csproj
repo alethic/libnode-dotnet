@@ -7,5 +7,6 @@
         <None Include="..\..\README.md" Pack="true" PackagePath="." />
         <None Include="buildTransitive\**\*" Pack="true" PackagePath="buildTransitive\%(RecursiveDir)%(Filename)%(Extension)" />
         <None Include="$(LibNodeDir)linux-arm64\libnode.so.*" Pack="true" PackagePath="runtimes\linux-arm64\native\" />
+        <None Include="$(LibNodeDir)linux-arm64\libnode-dotnet.so" Pack="true" PackagePath="runtimes\linux-arm64\native\" />
     </ItemGroup>
 </Project>

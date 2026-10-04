@@ -2,5 +2,6 @@
     <!-- .NET Framework does not resolve runtimes\<rid>\native assets: copy them to the output under the same path. -->
     <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
         <None Include="$(LibNodeNativeDir_win_x64)libnode.dll" Link="runtimes\win-x64\native\libnode.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+        <None Include="$(LibNodeNativeDir_win_x64)node-dotnet.dll" Link="runtimes\win-x64\native\node-dotnet.dll" CopyToOutputDirectory="PreserveNewest" Visible="false" />
     </ItemGroup>
 </Project>

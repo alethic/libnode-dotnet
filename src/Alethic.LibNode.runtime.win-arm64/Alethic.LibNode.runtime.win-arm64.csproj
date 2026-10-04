@@ -8,5 +8,6 @@
         <None Include="buildTransitive\**\*" Pack="true" PackagePath="buildTransitive\%(RecursiveDir)%(Filename)%(Extension)" />
         <None Include="$(LibNodeDir)win-arm64\libnode.dll" Pack="true" PackagePath="runtimes\win-arm64\native\" />
         <None Include="$(LibNodeDir)win-arm64\libnode.lib" Pack="true" PackagePath="build\native\lib\win-arm64\" />
+        <None Include="$(LibNodeDir)win-arm64\node-dotnet.dll" Pack="true" PackagePath="runtimes\win-arm64\native\" />
     </ItemGroup>
 </Project>
