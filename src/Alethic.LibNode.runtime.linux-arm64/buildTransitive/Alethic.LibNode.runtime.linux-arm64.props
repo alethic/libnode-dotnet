@@ -1,5 +1,0 @@
-<Project>
-    <PropertyGroup>
-        <LibNodeNativeDir_linux_arm64>$(MSBuildThisFileDirectory)..\runtimes\linux-arm64\native\</LibNodeNativeDir_linux_arm64>
-    </PropertyGroup>
-</Project>

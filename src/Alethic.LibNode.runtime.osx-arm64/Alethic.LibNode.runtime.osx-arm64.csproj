@@ -1,11 +1,10 @@
 <Project Sdk="Microsoft.Build.NoTargets">
     <PropertyGroup>
-        <Description>Node.js shared library (libnode) for osx-arm64.</Description>
+        <Description>Node.js shared library (libnode) and its node-dotnet embedding shim, for osx-arm64.</Description>
     </PropertyGroup>
 
     <ItemGroup>
         <None Include="..\..\README.md" Pack="true" PackagePath="." />
-        <None Include="buildTransitive\**\*" Pack="true" PackagePath="buildTransitive\%(RecursiveDir)%(Filename)%(Extension)" />
         <None Include="$(LibNodeDir)osx-arm64\libnode.*.dylib" Pack="true" PackagePath="runtimes\osx-arm64\native\" />
         <None Include="$(LibNodeDir)osx-arm64\libnode-dotnet.dylib" Pack="true" PackagePath="runtimes\osx-arm64\native\" />
     </ItemGroup>

@@ -1,11 +1,10 @@
 <Project Sdk="Microsoft.Build.NoTargets">
     <PropertyGroup>
-        <Description>Node.js shared library (libnode) for linux-x64.</Description>
+        <Description>Node.js shared library (libnode) and its node-dotnet embedding shim, for linux-x64.</Description>
     </PropertyGroup>
 
     <ItemGroup>
         <None Include="..\..\README.md" Pack="true" PackagePath="." />
-        <None Include="buildTransitive\**\*" Pack="true" PackagePath="buildTransitive\%(RecursiveDir)%(Filename)%(Extension)" />
         <None Include="$(LibNodeDir)linux-x64\libnode.so.*" Pack="true" PackagePath="runtimes\linux-x64\native\" />
         <None Include="$(LibNodeDir)linux-x64\libnode-dotnet.so" Pack="true" PackagePath="runtimes\linux-x64\native\" />
     </ItemGroup>

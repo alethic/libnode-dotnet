@@ -37,8 +37,6 @@ built against one specific libnode build, with the same compiler, and ships besi
 Alethic.LibNode.runtime.<rid>                   one per RID
   runtimes/<rid>/native/                          libnode.dll | libnode.so.<abi> | libnode.<abi>.dylib
                                                   node-dotnet.dll | libnode-dotnet.so | libnode-dotnet.dylib
-  build/native/lib/<rid>/libnode.lib              (Windows) import library
-  buildTransitive/Alethic.LibNode.runtime.<rid>.props    LibNodeNativeDir_<rid>, LibNodeLibDir_<rid>
   buildTransitive/Alethic.LibNode.runtime.<rid>.targets  (Windows) .NET Framework: copies the
                                                   native libraries to the output as runtimes\<rid>\native\
 Alethic.LibNode                                 depends on every RID package
