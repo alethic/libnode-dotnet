@@ -1,7 +1,7 @@
-// Copyright (c) Microsoft Corporation.
+// Copyright (c) 2026 Alethic.
 // Licensed under the MIT License.
 
-// libnode embedding shim.
+// node-dotnet: the libnode embedding shim.
 //
 // A C ABI that mirrors Node.js's public C++ embedding API (src/node.h in the Node.js source tree)
 // one-to-one, plus the small slice of v8.h an embedder needs: Locker, Isolate/Handle/Context scopes

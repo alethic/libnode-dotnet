@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.
+// Copyright (c) 2026 Alethic.
 // Licensed under the MIT License.
 
 // See node-dotnet.h. Each function is a thin, mechanical wrapper over one node.h / v8.h
